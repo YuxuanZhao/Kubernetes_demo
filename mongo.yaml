@@ -1,3 +1,4 @@
+# deployment and sevice of mongo, 可以分成两个文件，但是一般在同一个
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -5,13 +6,13 @@ metadata:
   labels:
     app: mongo
 spec:
-  replicas: 1
+  replicas: 1 # 我们的database只要一个
   selector:
-    matchLabels:
+    matchLabels: # label需要都是同一个
       app: mongo
-  template:
+  template: # blueprint for pods
     metadata:
-      labels:
+      labels: # different pods may provide same application and they can all have same label name
         app: mongo
     spec:
       containers:
@@ -19,10 +20,10 @@ spec:
         image: mongo:5.0
         ports:
         - containerPort: 27017
-        env:
+        env: # 设置环境变量
         - name: MONGO_INITDB_ROOT_USERNAME
           valueFrom:
-            secretKeyRef:
+            secretKeyRef: # 从secret key中引用过来
               name: mongo-secret
               key: mongo-user
         - name: MONGO_INITDB_ROOT_PASSWORD
@@ -30,15 +31,15 @@ spec:
             secretKeyRef:
               name: mongo-secret
               key: mongo-password  
----
+--- # yaml 语法，分开deployment和service两者
 apiVersion: v1
 kind: Service
 metadata:
   name: mongo-service
 spec:
-  selector:
+  selector: # 需要知道将request forward 到哪一个pods
     app: mongo
   ports:
     - protocol: TCP
-      port: 27017
-      targetPort: 27017
+      port: 27017 # 可以与target port不同，一般的实现是相同的port
+      targetPort: 27017 # 这个必须与上面的containerPort相对应
